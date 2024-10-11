@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
 import telebot
+import sqlite3
 from telebot import types
-
 
 # Ссылки на фото произведений
 photo1 = 'https://avatars.mds.yandex.net/i?id=8ce1b6d52ee21aab585d66780a448fab_l-3760959-images-thumbs&n=13'
@@ -34,14 +35,31 @@ text9 = ('Исторический роман о молодом офицере �
 text10 = ('Сборник рассказов Пушкина, каждый из которых представлен как написанный другим человеком. Истории разнообразны и касаются разных аспектов жизни.')
 
 # токен бота
-bot = telebot.TeleBot("8094035741:AAFWYPGy75zklMjziu3rYFkc9d7wbw_bQ5s")
+bot = telebot.TeleBot("7929042954:AAER7AEZ9ZFAgUlJzA_kU60Wx7u__UVXAuQ")
+
+conn = sqlite3.connect('database.db', check_same_thread=False)
+cursor = conn.cursor()
+
+
+def db_table_val(user_id: int, user_name: str, user_surname: str, username: str):
+    cursor.execute('INSERT INTO Users (user_id, user_name, user_surname, username) VALUES (?, ?, ?, ?)',
+                   (user_id, user_name, user_surname, username))
+    conn.commit()
+
+
 @bot.message_handler(commands=['start'])
-def welcome(message):
-    if message.text == '/start':
-        # Отправляю приветственный текст
-        bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name}!\n\nУ меня ты сможешь увидеть список книг(/book) выбрать по клику книгу и увидеть её описание\nЗапросить отсутствующую книгу(/bookreq), чтобы её добавили в библиотеку, раздел настроек(/settings)\nВернуться назад(/back)\n\nКонтакт для связи: https://t.me/neosome')
-    else:
-        bot.send_message(message.chat.id, 'Перекинул тебя в главном меню! ')
+def start_message(message):
+    bot.send_message(message.chat.id, 'Добро пожаловать. Ваше имя добавлено в базу данных!\n\nНавигация:\n'
+                                          '/book - Список книг и их описание\n'
+                                          '/bookreq - Если не нашел книгу из списка\n'
+                                          '/settings - Обратная связь\n'
+                                          '/back - Вернуться назад к Навигации')
+    us_id = message.from_user.id
+    us_name = message.from_user.first_name
+    us_sname = message.from_user.last_name
+    username = message.from_user.username
+
+    db_table_val(user_id=us_id, user_name=us_name, user_surname=us_sname, username=username)
 
 @bot.message_handler(commands=['book'])
 def book(message):
